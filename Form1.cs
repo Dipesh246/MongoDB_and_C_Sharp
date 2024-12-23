@@ -24,13 +24,12 @@ namespace UtilityApp
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            string selectedDatabase = listBox1.SelectedItem?.ToString();
+            string selectedDatabase = databaselist.SelectedItem?.ToString();
             if (!string.IsNullOrEmpty(selectedDatabase))
             {
-                var result = MessageBox.Show($"Do you want to proceed with: {selectedDatabase}?", "Confirmation", MessageBoxButtons.YesNo);
                 var collections = DatabaseUtility.GetCollections(selectedDatabase);
-                listBox1.Items.Clear();
-                listBox1.Items.AddRange(collections.ToArray());
+                collectionList.Items.Clear();
+                collectionList.Items.AddRange(collections.ToArray());
 
             }
         }
@@ -38,8 +37,73 @@ namespace UtilityApp
         private void showdbbtn_Click(object sender, EventArgs e)
         {
             var databases = DatabaseUtility.GetDatabaseNames();
-            listBox1.Items.Clear();
-            listBox1.Items.AddRange(databases.ToArray());
+            databaselist.Items.Clear();
+            databaselist.Items.AddRange(databases.ToArray());
+        }
+
+        private void listBox1_SelectedIndexChanged_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void createcolbtn_Click(object sender, EventArgs e)
+        {
+            using (var form = new CreateCollectionForm())
+            {
+                if(form.ShowDialog() == DialogResult.OK)
+                {
+                    string databaseName = databaselist.SelectedItem?.ToString();
+                    if(string.IsNullOrEmpty(databaseName))
+                    {
+                        MessageBox.Show("Please select a database first.","Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                    string collectionName = form.CollectionName;
+
+                    try
+                    {
+                        DatabaseUtility.CreateCollection(databaseName, collectionName);
+                        MessageBox.Show($"Collection '{collectionName}' created successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        collectionList.Refresh();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message,"Error",MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void deletecolbtn_Click(object sender, EventArgs e)
+        {
+            string databaseName = databaselist.SelectedItem?.ToString();
+            string collectionName = collectionList.SelectedItem?.ToString();
+            if(string.IsNullOrEmpty(databaseName))
+            {
+                MessageBox.Show("Please select a database first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            if (string.IsNullOrEmpty(collectionName))
+            {
+                MessageBox.Show("Please select a collection to delete.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var result = MessageBox.Show($"Are you sure you want to delete the collection '{collectionName}'?","Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if(result == DialogResult.Yes)
+            {
+                try
+                {
+                    DatabaseUtility.DeleteCollection(databaseName, collectionName);
+                    MessageBox.Show($"Collection '{collectionName}' deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    collectionList.Refresh();
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
     }
 }
